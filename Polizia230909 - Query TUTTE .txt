@@ -1,0 +1,131 @@
+-- creazione delle tabelle con relazioni
+--CREATE TABLE ANAGRAFICA (
+--IDanagrafica INT IDENTITY PRIMARY KEY, 
+--Cognome NVARCHAR(20) not null,
+--Nome NVARCHAR(20) not null,
+--Indirizzo NVARCHAR(50) not null, 
+--Città NVARCHAR(20) not null, 
+--CAP NVARCHAR(5) not null, 
+--Cod_Fisc NVARCHAR(16) not null unique
+--)
+
+--CREATE TABLE TIPOVIOLAZIONE(
+--IDviolazione INT IDENTITY PRIMARY KEY,
+--Descrizione NVARCHAR(50) not null unique
+--)
+
+--CREATE TABLE VERBALE (
+--IDverbale INT IDENTITY PRIMARY KEY,
+--DataViolazione DATE not null,
+--IndirizzoViolazione NVARCHAR(50) not null,
+--Nominativo_Agente NVARCHAR(50) not null, 
+--DataTrascrizioneVerbale DATE not null,
+--Importo MONEY not null,
+--DecurtamentoPunti INT,
+
+--IDanagrafica INT not null,
+--CONSTRAINT FK_VERBALE_ANAGRAFICA FOREIGN KEY (IDanagrafica) 
+--REFERENCES ANAGRAFICA(IDanagrafica),
+
+--IDviolazione INT not null,
+--CONSTRAINT FK_VERBALE_TIPOVIOLAZIONE FOREIGN KEY (IDviolazione)
+--REFERENCES TIPOVIOLAZIONE(IDviolazione)
+--)
+
+-- INIZIO QUERY
+--1. Conteggio dei verbali trascritti,
+
+select count(*) from VERBALE
+
+--2. Conteggio dei verbali trascritti raggruppati per anagrafe,
+
+select count(*) as TotPerAnagrafica, Cod_Fisc
+from VERBALE AS V
+INNER JOIN
+ANAGRAFICA AS A ON
+V.IDanagrafica = a.idanagrafica 
+GROUP BY Cod_Fisc
+
+--3. Conteggio dei verbali trascritti raggruppati per tipo di violazione,
+
+select count(*) as TotPerViolazione, Descrizione from VERBALE AS V
+INNER JOIN
+tipoviolazione AS t ON
+v.IdViolazione=t.IdViolazione
+GROUP BY Descrizione
+
+--4. Totale dei punti decurtati per ogni anagrafe,
+
+select sum (DecurtamentoPunti) as TotPuntiDecurtati, Cod_Fisc 
+from Verbale as V
+Inner Join
+ANAGRAFICA as A ON
+V.IDanagrafica = a.IDanagrafica
+GROUP BY Cod_Fisc
+
+--5. Cognome, Nome, Data violazione, Indirizzo violazione, importo e punti decurtati per tutti gli anagrafici
+--residenti a Palermo,
+
+select count(*), Cognome, Nome, DataViolazione, IndirizzoViolazione, Importo, DecurtamentoPunti
+from VERBALE as V
+Inner Join
+ANAGRAFICA as A ON
+V.IDanagrafica = a.IDanagrafica
+where Città = 'Palermo'
+group by Cognome, Nome, DataViolazione, IndirizzoViolazione, Importo, DecurtamentoPunti
+
+--6. Cognome, Nome, Indirizzo, Data violazione, importo e punti decurtati per le violazioni fatte tra il febbraio
+--2009 e luglio 2009,
+
+select count(*), Cognome, Nome, DataViolazione, IndirizzoViolazione, Importo, DecurtamentoPunti
+from VERBALE as V
+Inner Join
+ANAGRAFICA as A ON
+V.IDanagrafica = a.IDanagrafica
+where DataViolazione between '01/02/2009' and '31/07/2009'
+group by Cognome, Nome, DataViolazione, IndirizzoViolazione, Importo, DecurtamentoPunti
+
+--7. Totale degli importi per ogni anagrafico,
+
+select sum(Importo), Cod_Fisc, nome, cognome
+from VERBALE as V
+Inner Join
+ANAGRAFICA as A ON
+V.IDanagrafica = a.IDanagrafica
+group by Cod_Fisc, nome, cognome
+
+
+--8. Visualizzazione di tutti gli anagrafici residenti a Palermo,
+
+select (IDanagrafica), Cognome, Nome, Città from ANAGRAFICA
+where Città = 'Palermo'
+
+--9. Query parametrica che visualizzi Data violazione, Importo e decurta mento punti relativi ad una certa data,
+-- VEDI STORE PROCEDURE
+
+--10. Conteggio delle violazioni contestate raggruppate per Nominativo dell’agente di Polizia,
+
+select count (IDVerbale) as TotViolazioniEffettuale, Nominativo_Agente from Verbale
+group by Nominativo_Agente
+
+--11. Cognome, Nome, Indirizzo, Data violazione, Importo e punti decurtati per tutte le violazioni che superino il
+--decurtamento di 5 punti,
+
+select count(*), Cognome, Nome, Indirizzo, DataViolazione, Importo 
+from VERBALE as V
+Inner Join
+ANAGRAFICA as A ON
+V.IDanagrafica = a.IDanagrafica
+where DecurtamentoPunti > 5
+group by Cognome, Nome, Indirizzo, DataViolazione, Importo
+
+--12. Cognome, Nome, Indirizzo, Data violazione, Importo e punti decurtati per tutte le violazioni che superino
+--l’importo di 400 euro.
+
+select count(*), Cognome, Nome, Indirizzo, DataViolazione, Importo 
+from VERBALE as V
+Inner Join
+ANAGRAFICA as A ON
+V.IDanagrafica = a.IDanagrafica
+where Importo > 400
+group by Cognome, Nome, Indirizzo, DataViolazione, Importo
